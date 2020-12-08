@@ -1,2 +1,2 @@
 # programming-challenges
-!(programming.png)
+![](programming.png)
