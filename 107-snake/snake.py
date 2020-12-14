@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import pygame
+import random
 
 pygame.init()
 
@@ -20,8 +21,8 @@ class Snake():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.height = hei/ver_tiles
-        self.width = wid/hor_tiles
+        self.height = ver_pixels
+        self.width = hor_pixels
         self.shape = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 255, 255)
         self.tail = []
@@ -34,23 +35,24 @@ class Snake():
         tempy1 = self.y
         tempx2 = 0
         tempy2 = 0
-        for x in self.tail:
-            tempx2 = x[0]
-            tempy2 = x[1]
-            x[0] = tempx1
-            x[1] = tempy1
+        for i in self.tail:
+            tempx2 = i.x
+            tempy2 = i.y
+            i.x = tempx1
+            i.y = tempy1
             tempx1 = tempx2
             tempy1 = tempy2
 
         self.x += vx
         self.y += vy
+
+        self.collision()
+
+        if apple.is_eaten():
+            self.tail.append(pygame.Rect(self.x, self.y, self.width, self.height))
         # Checking if the head hit the borders of the screen
         if self.x < 0 or self.x + self.width > wid or self.y < 0 or self.y + self.height > hei:
-            self.x = wid/2
-            self.y = hei/2
-            for i in self.tail:
-                i[0] = self.x
-                i[1] = self.y
+            self.respawn()
 
         self.shape = pygame.Rect(self.x, self.y, self.width, self.height)
 
@@ -59,14 +61,51 @@ class Snake():
         for i in self.tail:
             pygame.draw.rect(screen, self.color, i, 0)
 
+    def collision(self):
+        for i in self.tail:
+            if self.shape.colliderect(i):
+                self.respawn()
+
+    def respawn(self):
+        self.x = wid/2
+        self.y = hei/2
+        self.tail = []
+        for i in range(5):
+            self.tail.append(pygame.Rect(self.x, self.y, self.width, self.height))
+
+
+class Apple():
+    def __init__(self):
+        self.x = random.randint(0, hor_tiles - 1) * hor_pixels
+        self.y = random.randint(0, ver_tiles - 1) * ver_pixels
+        while self.x == player.x and self.y == player.y:
+            self.x = random.randint(0, hor_tiles - 1) * hor_pixels
+            self.y = random.randint(0, ver_tiles - 1) * ver_pixels
+        self.height = hor_pixels
+        self.width = ver_pixels
+        self.shape = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.color = (255, 0, 0)
+
+    def draw(self):
+        pygame.draw.rect(screen, self.color, self.shape, 0)
+
+    def is_eaten(self):
+        if self.x == player.x and self.y == player.y:
+            self.__init__()
+            return True
+        return False
+
 
 player = Snake(wid/2, hei/2)
+
+apple = Apple()
 
 counter = 100
 
 while True:
     screen.fill((0, 0, 0))
     player.draw()
+    apple.draw()
     pygame.display.update()
 
     for event in pygame.event.get():
@@ -75,18 +114,20 @@ while True:
             quit()
 
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP or event.key == pygame.K_w:
-                vy = -ver_pixels
-                vx = 0
-            elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                vy = ver_pixels
-                vx = 0
-            elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                vx = hor_pixels
-                vy = 0
-            elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                vx = -hor_pixels
-                vy = 0
+            if vy == 0:
+                if event.key == pygame.K_UP or event.key == pygame.K_w:
+                    vy = -ver_pixels
+                    vx = 0
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    vy = ver_pixels
+                    vx = 0
+            if vx == 0:
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    vx = hor_pixels
+                    vy = 0
+                elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    vx = -hor_pixels
+                    vy = 0
 
     if counter < 1:
         player.move(vx, vy)
