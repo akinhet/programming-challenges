@@ -11,7 +11,7 @@ ver_tiles = 30
 hor_tiles = 30
 ver_pixels = wid/hor_tiles
 hor_pixels = hei/ver_tiles
-vy = 0
+vy = -ver_pixels
 vx = 0
 
 screen = pygame.display.set_mode((wid, hei))
@@ -27,9 +27,9 @@ class Snake():
         self.color = (255, 255, 255)
         self.tail = []
         for i in range(5):
-            self.tail.append(pygame.Rect(self.x, self.y, self.width, self.height))
+            self.tail.append(pygame.Rect(self.x, self.y+i*ver_pixels, self.width, self.height))
 
-    def move(self, vx, vy):
+    def move(self, key):
         # Moving the tail
         tempx1 = self.x
         tempy1 = self.y
@@ -43,13 +43,19 @@ class Snake():
             tempx1 = tempx2
             tempy1 = tempy2
 
-        self.x += vx
-        self.y += vy
+        if key == 'up':
+            self.y -= ver_pixels
+        elif key == 'down':
+            self.y += ver_pixels
+        elif key == 'right':
+            self.x += hor_pixels
+        elif key == 'left':
+            self.x -= hor_pixels
 
         self.collision()
 
         if apple.is_eaten():
-            self.tail.append(pygame.Rect(self.x, self.y, self.width, self.height))
+            self.tail.append(pygame.Rect(self.tail[-1].x, self.tail[-1].y, self.width, self.height))
         # Checking if the head hit the borders of the screen
         if self.x < 0 or self.x + self.width > wid or self.y < 0 or self.y + self.height > hei:
             self.respawn()
@@ -63,7 +69,7 @@ class Snake():
 
     def collision(self):
         for i in self.tail:
-            if self.shape.colliderect(i):
+            if self.x == i.x and self.y == i.y:
                 self.respawn()
 
     def respawn(self):
@@ -71,7 +77,11 @@ class Snake():
         self.y = hei/2
         self.tail = []
         for i in range(5):
-            self.tail.append(pygame.Rect(self.x, self.y, self.width, self.height))
+            self.tail.append(pygame.Rect(self.x, self.y+i*ver_pixels, self.width, self.height))
+        global prevkey
+        prevkey = 'up'
+        global currkey
+        currkey = 'up'
 
 
 class Apple():
@@ -100,7 +110,9 @@ player = Snake(wid/2, hei/2)
 
 apple = Apple()
 
-counter = 100
+counter = 200
+currkey = 'up'
+prevkey = 'up'
 
 while True:
     screen.fill((0, 0, 0))
@@ -114,23 +126,22 @@ while True:
             quit()
 
         elif event.type == pygame.KEYDOWN:
-            if vy == 0:
-                if event.key == pygame.K_UP or event.key == pygame.K_w:
-                    vy = -ver_pixels
-                    vx = 0
-                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                    vy = ver_pixels
-                    vx = 0
-            if vx == 0:
-                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                    vx = hor_pixels
-                    vy = 0
-                elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                    vx = -hor_pixels
-                    vy = 0
+            if event.key == pygame.K_UP or event.key == pygame.K_w:
+                if prevkey != 'down':
+                    currkey = 'up'
+            elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                if prevkey != 'up':
+                    currkey = 'down'
+            elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                if prevkey != 'left':
+                    currkey = 'right'
+            elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                if prevkey != 'right':
+                    currkey = 'left'
 
     if counter < 1:
-        player.move(vx, vy)
-        counter = 100
+        prevkey = currkey
+        player.move(currkey)
+        counter = 200
     else:
         counter -= 1
