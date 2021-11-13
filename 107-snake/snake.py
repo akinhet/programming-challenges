@@ -30,7 +30,6 @@ class Snake():
             self.tail.append(pygame.Rect(self.x, self.y+i*ver_pixels, self.width, self.height))
 
     def move(self, key):
-        # Moving the tail
         tempx1 = self.x
         tempy1 = self.y
         tempx2 = 0
